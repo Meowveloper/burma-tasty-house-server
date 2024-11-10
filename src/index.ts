@@ -54,11 +54,9 @@ mongoose
     .connect(databaseUrl)
     .then(() => {
         console.log(process.env.ENVIRONMENT !== "production" ? 'Connected to database "burma-tasty-house"..' : 'Connected to database "burma-tasty-house-production"..');
-        if (process.env.ENVIRONMENT !== "production") {
             app.listen(process.env.PORT, () => {
                 console.log("App is running on port : " + process.env.PORT);
             });
-        }
     })
     .catch(err => {
         console.log("database connection error", err);
