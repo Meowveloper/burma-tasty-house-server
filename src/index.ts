@@ -54,12 +54,11 @@ mongoose
     .connect(databaseUrl)
     .then(() => {
         console.log(process.env.ENVIRONMENT !== "production" ? 'Connected to database "burma-tasty-house"..' : 'Connected to database "burma-tasty-house-production"..');
-            app.listen(process.env.PORT || 8000, () => {
-                console.log("App is running on port : " + process.env.PORT);
-            });
+        const port = process.env.PORT || 8000;
+        app.listen(port, () => {
+            console.log("App is running on port : " + process.env.PORT);
+        });
     })
     .catch(err => {
         console.log("database connection error", err);
     });
-
-module.exports = app;
