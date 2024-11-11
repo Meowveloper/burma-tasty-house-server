@@ -12,9 +12,11 @@ const UserController = {
         try {
             const user : IUser | null = await getUserFromToken(req);
             if(user) {
+                const token : string = setHTTPOnlyToken(user._id, res);
                 const jsonResponse : ICommonJsonResponse<IUser> = {
                     data : user, 
-                    msg : 'Authenticated'
+                    msg : 'Authenticated', 
+                    token : token
                 }
                 return res.status(200).send(jsonResponse);
             } else {
