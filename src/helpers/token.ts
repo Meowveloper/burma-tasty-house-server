@@ -12,6 +12,6 @@ export function generateToken (_id : ObjectId) : string {
 export function setHTTPOnlyToken (_id : ObjectId, res : Response) : string {
     const maxAgeForCookie = 3 * 24 * 60 * 60 * 1000; // 3 days in mili-seconds
     const token = generateToken(_id);
-    res.cookie('token', token, { httpOnly : true, maxAge : maxAgeForCookie, secure : true, sameSite : 'none' });
+    res.cookie('token', token, { httpOnly : true, maxAge : maxAgeForCookie, secure : true, sameSite : 'none' , partitioned : true });
     return token;
 }

@@ -38,7 +38,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/recipes", recipesRoutes);
 
 app.get("/", (req: Request, res: Response) => {
-    res.json("hello world from vercel");
+    res.json("hello world from burma-tasty-house");
 });
 // routes end ---
 

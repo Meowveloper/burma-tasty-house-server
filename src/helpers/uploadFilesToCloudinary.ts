@@ -1,8 +1,10 @@
 import { v2 as cloudinary } from "cloudinary";
-import path from 'path';
+import path from "path";
+import fs from "fs";
+import EnumCloudinaryFileTypes from "../types/EnumCloudinaryFileTypes";
 require("dotenv/config");
 
-async function uploadFilesToCloudinary(fileName : string) {
+async function uploadFilesToCloudinary(fileName: string, fileType : EnumCloudinaryFileTypes): Promise<string | null> {
     try {
         cloudinary.config({
             cloud_name: "dvsrz6mfy",
@@ -17,21 +19,23 @@ async function uploadFilesToCloudinary(fileName : string) {
                 quality: "auto",
             },
         ];
-        const filePath : string = path.join(__dirname, '../../public', fileName);
+        const filePath: string = path.join(__dirname, "../../public", fileName);
+        if (!fs.existsSync(filePath)) {
+            console.log(`File does not exist: ${filePath}`);
+            throw new Error("File not found");
+        }
+        const folderName = process.env.ENVIRONMENT === 'production' ? 'burma-tasty-house-production' : 'burma-tasty-house'; 
 
         const uploadResult = await cloudinary.uploader.upload(filePath, {
-            folder : 'burma-tasty-house', 
-            resource_type : 'auto'
+            folder: folderName,
+            resource_type: fileType,
+            public_id: fileName,
         });
         console.log("upload result", uploadResult);
-        const url = await cloudinary.url(uploadResult.public_id, {
-            transformation: transFormationArray,
-        });
-        console.log("the success url", url);
-        return url;
+        return uploadResult.secure_url;
     } catch (e) {
         console.log(e);
-        throw new Error((e as Error).message);
+        return null;
     }
 }
 

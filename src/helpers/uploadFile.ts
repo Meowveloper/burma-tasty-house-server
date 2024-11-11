@@ -1,6 +1,7 @@
 import { UploadedFile } from "express-fileupload";
 import EnumFileTypes from "../types/EnumFileTypes";
 import path from "path";
+import fs from 'fs';
 
 function uploadFile(theFile: UploadedFile, fileType: EnumFileTypes): string {
     const allowedExtensions = {
@@ -24,8 +25,15 @@ function uploadFile(theFile: UploadedFile, fileType: EnumFileTypes): string {
     else if (fileType === EnumFileTypes.StepImage) filePrefix = "recipe-step-image-";
     else throw new Error("Error while uploading file");
 
+     const publicDir = path.join(__dirname, "../../public");
+
+    // Create the 'public' directory if it doesn't exist
+    if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+    }
+
     const fileName = filePrefix + new Date().getTime() + "-" + theFile.name;
-    const filePath = path.join(__dirname, "../../public", fileName);
+    const filePath = path.join(publicDir, fileName);
 
     theFile.mv(filePath, (err: any) => {
         if (err) throw new Error("error while uploading file!!");
