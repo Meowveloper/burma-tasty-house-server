@@ -81,17 +81,12 @@ const RecipeSchema = new Schema<IRecipe>(
 RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | void> {
     console.log('the files', req.files);
     let uploadedFileUrls: Array<{ url: string; type: EnumCloudinaryFileTypes }> = [];
-    const stepImagesPaths: string[] = [];
-    let imageFileName : string | null = null;
-    let videoFileName : string | null = null;
     try {
         if (!req.files?.image) throw new Error("Recipe image is required!!");
         const recipeImage = req.files.image as UploadedFile;
         const recipeVideo = req.files.video as UploadedFile;
-        imageFileName = uploadFile(recipeImage, EnumFileTypes.Image);
-        videoFileName = uploadFile(recipeVideo, EnumFileTypes.Video);
 
-        const [imageCloudUrl, videoCloudUrl] = await Promise.all([uploadFilesToCloudinary(imageFileName, EnumCloudinaryFileTypes.image), uploadFilesToCloudinary(videoFileName, EnumCloudinaryFileTypes.video)]);
+        const [imageCloudUrl, videoCloudUrl] = await Promise.all([uploadFilesToCloudinary(recipeImage, EnumCloudinaryFileTypes.image), uploadFilesToCloudinary(recipeVideo, EnumCloudinaryFileTypes.video)]);
 
         if (!imageCloudUrl || !videoCloudUrl) throw new Error("Error uploading files to Cloudinary");
 
@@ -110,11 +105,8 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
 
                 let imageUrl: string | null = "";
                 if (stepImage) {
-                    const thePath = uploadFile(stepImage, EnumFileTypes.StepImage);
-                    stepImagesPaths.push(thePath);
-
                     // Wait for Cloudinary upload to complete and get the URL
-                    imageUrl = await uploadFilesToCloudinary(thePath, EnumCloudinaryFileTypes.image);
+                    imageUrl = await uploadFilesToCloudinary(stepImage, EnumCloudinaryFileTypes.image);
                     if(!imageUrl) throw new Error('error uploading step image');
                 }
 
@@ -160,9 +152,7 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
         }
         console.log("Error in model", e);
     } finally {
-        console.log('finally clean up')
-        await Promise.all(stepImagesPaths.map((step: string) => deleteFile(path.join(__dirname, "../../public", step))));
-        if(imageFileName && videoFileName ) await Promise.all([deleteFile(path.join(__dirname, "../../public", imageFileName)), deleteFile(path.join(__dirname, "../../public", videoFileName))]);
+        console.log('finally clean up');
     }
 };
 
