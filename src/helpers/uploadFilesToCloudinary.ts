@@ -34,7 +34,7 @@ async function uploadFilesToCloudinary(fileName: string, fileType : EnumCloudina
         console.log("upload result", uploadResult);
         return uploadResult.secure_url;
     } catch (e) {
-        console.log(e);
+        console.log('error while uploading file to cloudinary', e);
         return null;
     }
 }
