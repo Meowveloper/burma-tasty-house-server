@@ -79,7 +79,7 @@ const RecipeSchema = new Schema<IRecipe>(
 );
 
 RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | void> {
-    console.log('the files', req.files);
+    console.log("the files", req.files);
     let uploadedFileUrls: Array<{ url: string; type: EnumCloudinaryFileTypes }> = [];
     try {
         if (!req.files?.image) throw new Error("Recipe image is required!!");
@@ -107,7 +107,7 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
                 if (stepImage) {
                     // Wait for Cloudinary upload to complete and get the URL
                     imageUrl = await uploadFilesToCloudinary(stepImage, EnumCloudinaryFileTypes.image);
-                    if(!imageUrl) throw new Error('error uploading step image');
+                    if (!imageUrl) throw new Error("error uploading step image");
                 }
 
                 // Create the step with the image URL, if available
@@ -128,7 +128,8 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
         await Step.insertMany(steps);
         recipe.steps = steps.map((step: IStep) => step._id);
 
-        const tagNames = req.body.tags.map((tag: any) => tag.trim().toLowerCase());
+        const tagNames = Array.isArray(req.body.tags) ? req.body.tags.map((tag: any) => tag.trim().toLowerCase()) : req.body.tags.split(",").map((tag: string) => tag.trim().toLowerCase());
+        console.log('tag names', tagNames);
         let existingTags: Array<mongoose.Document<unknown, {}, ITag> & ITag & Required<{ _id: Schema.Types.ObjectId }>> = await Tag.find({ name: { $in: tagNames } });
         let newTags: Array<mongoose.Document<unknown, {}, ITag> & ITag & Required<{ _id: Schema.Types.ObjectId }>> = tagNames.filter((name: any) => !existingTags.find(tag => tag.name === name)).map((name: any) => new Tag({ name, recipes: [recipe._id] }));
 
@@ -152,7 +153,7 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
         }
         console.log("Error in model", e);
     } finally {
-        console.log('finally clean up');
+        console.log("finally clean up");
     }
 };
 
