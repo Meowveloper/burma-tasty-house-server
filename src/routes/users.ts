@@ -12,6 +12,7 @@ userRoutes.post('/register',[
     body('name').notEmpty().withMessage('name is required'), 
     body('password').notEmpty().withMessage('password is required') 
 ], handleErrorMessage, UserController.register);
+userRoutes.get('/user-with-recipe/:userId', UserController.getUserPopulatedWithRecipes);
 
 userRoutes.post('/logout', UserController.logout);
 

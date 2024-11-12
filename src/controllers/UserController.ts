@@ -6,30 +6,31 @@ import ICommonError from "../types/ICommonError";
 import EnumErrorNames from "../types/EnumErrorNames";
 import { setHTTPOnlyToken } from "../helpers/token";
 import getUserFromToken from "../helpers/getUserFromToken";
+import mongoose from "mongoose";
+import IRecipe from "../types/IRecipe";
 const UserController = {
-
-    me : async (req : Request, res: Response) => {
+    me: async (req: Request, res: Response) => {
         try {
-            const user : IUser | null = await getUserFromToken(req);
-            if(user) {
-                const token : string = setHTTPOnlyToken(user._id, res);
-                const jsonResponse : ICommonJsonResponse<IUser> = {
-                    data : user, 
-                    msg : 'Authenticated', 
-                    token : token
-                }
+            const user: IUser | null = await getUserFromToken(req);
+            if (user) {
+                const token: string = setHTTPOnlyToken(user._id, res);
+                const jsonResponse: ICommonJsonResponse<IUser> = {
+                    data: user,
+                    msg: "Authenticated",
+                    token: token,
+                };
                 return res.status(200).send(jsonResponse);
             } else {
-                throw new Error('User not found');
+                throw new Error("User not found");
             }
         } catch (e) {
-            const jsonError : ICommonError<string> = {
-                type : 'authentication error', 
-                path : 'api/users/me', 
-                location : 'api/users/me', 
-                msg : (e as Error).message, 
-                value : 'authentication error'
-            }
+            const jsonError: ICommonError<string> = {
+                type: "authentication error",
+                path: "api/users/me",
+                location: "api/users/me",
+                msg: (e as Error).message,
+                value: "authentication error",
+            };
             return res.status(401).send(jsonError);
         }
     },
@@ -123,14 +124,54 @@ const UserController = {
         }
     },
 
-    logout : async function (req: Request, res: Response) {
-        res.cookie('token', '', { maxAge : 1 });
-        const jsonResponse : ICommonJsonResponse<null> = {
-            data : null, 
-            msg : "logged out"
+    getUserPopulatedWithRecipes: async function (req: Request, res: Response) {
+        const userId = req.params.userId;
+        console.log(userId);
+        try {
+            const userPopulatedWithRecipes = await User.findById(userId)
+                .populate({
+                    path: "recipes",
+                    populate: [
+                        { path: "steps", model: "Step" },
+                        { path: "tags", model: "Tag" },
+                    ],
+                })
+                .then(user => {
+                    if (user && user.recipes) {
+                        // Sort recipes by 'updatedAt' field in descending order
+                        user.recipes.sort((a, b) => {
+                            return (b as IRecipe).updatedAt!.getTime() - (a as IRecipe).updatedAt!.getTime(); // latest first
+                        });
+                    }
+                    return user;
+                });
+            if (!userPopulatedWithRecipes) throw new Error("user not found");
+            const jsonResponse: ICommonJsonResponse<mongoose.Document<unknown, {}, IUser> & IUser & Required<{ _id: mongoose.Schema.Types.ObjectId }> & { __v: number }> = {
+                data: userPopulatedWithRecipes,
+                msg: "successfully fetched user populated with recipes",
+            };
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError: ICommonError<string> = {
+                type: "register error",
+                location: "/user-with-recipe/:userId",
+                msg: (e as Error).message,
+                path: "/user-with-recipe/:userId",
+                value: (e as Error).message,
+            };
+            return res.status(404).send(jsonError);
+        }
+    },
+
+    logout: async function (req: Request, res: Response) {
+        res.cookie("token", "", { maxAge: 1 });
+        const jsonResponse: ICommonJsonResponse<null> = {
+            data: null,
+            msg: "logged out",
         };
         return res.status(200).send(jsonResponse);
-    }
+    },
 };
 
 export default UserController;
