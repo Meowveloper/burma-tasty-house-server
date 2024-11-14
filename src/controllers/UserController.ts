@@ -134,6 +134,7 @@ const UserController = {
                     populate: [
                         { path: "steps", model: "Step" },
                         { path: "tags", model: "Tag" },
+                        { path: "user", model : "User"}
                     ],
                 })
                 .then(user => {
