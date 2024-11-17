@@ -3,8 +3,7 @@ import IRecipe from "../types/IRecipe";
 import Recipe from "../models/Recipe";
 import ICommonError from "../types/ICommonError";
 import ICommonJsonResponse from "../types/ICommonJsonResponse";
-import path from 'path'
-import { UploadedFile } from "express-fileupload";
+
 const RecipeController = {
     index: async function (req: Request, res: Response) {
         try {
