@@ -3,11 +3,18 @@ import IRecipe from "../types/IRecipe";
 import Recipe from "../models/Recipe";
 import ICommonError from "../types/ICommonError";
 import ICommonJsonResponse from "../types/ICommonJsonResponse";
+import { populate } from "dotenv";
 
 const RecipeController = {
     index: async function (req: Request, res: Response) {
         try {
-            const recipes: IRecipe[] = await Recipe.find().sort({ createdAt: -1 });
+            const recipes: IRecipe[] = await Recipe.find().populate(
+               [
+                   { path: "steps", model: "Step" },
+                   { path: "tags", model: "Tag" },
+                   { path: "user", model : "User"}
+               ] 
+            ).sort({ createdAt: -1 });
             const resObject: ICommonJsonResponse<IRecipe[]> = {
                 data: recipes,
                 msg: "successfully fetched all recipes",
@@ -77,6 +84,76 @@ const RecipeController = {
             });
         }
     },
+    
+    latestRecipesWithNumberLimit : async function (req : Request, res : Response) {
+        const limit : number = req.query.limit ? Number(req.query.limit) : 5;
+        try {
+            const recipes : IRecipe[] = await Recipe.find().populate(
+                [
+                    { path: "steps", model: "Step" },
+                    { path: "tags", model: "Tag" },
+                    { path: "user", model : "User" }
+                ] 
+            ).sort({ createdAt: -1 }).limit(limit);
+
+            if(recipes.length > 0) {
+                const resObject : ICommonJsonResponse<IRecipe[]> = {
+                    data : recipes,
+                    msg : "Successfully fetched latest " + req.params.limit + " recipes"
+                }
+                return res.status(200).send(resObject);
+            } else {
+                throw new Error("no recipes found");
+            }
+        } catch (e) {
+            console.log(e);
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/recipes/latest?limit=" + limit,
+                type : "get method",
+                msg : "error fetching latest recipes",
+            };
+            return res.status(500).send({
+                errors : {
+                    recipe : errorRes
+                }
+            });
+        }
+    }, 
+
+    highestViewRecipesWithNumberLimit : async function (req : Request, res : Response) {
+        const limit : number = req.query.limit ? Number(req.query.limit) : 5;
+        try {
+            const recipes : IRecipe[] = await Recipe.find().populate(
+                [
+                    { path: "steps", model: "Step" },
+                    { path: "tags", model: "Tag" },
+                    { path: "user", model : "User" }
+                ] 
+            ).sort({ views: -1 }).limit(limit);
+
+            if(recipes.length > 0) {
+                const resObject : ICommonJsonResponse<IRecipe[]> = {
+                    data : recipes,
+                    msg : "Successfully fetched highest view " + req.params.limit + " recipes"
+                }
+                return res.status(200).send(resObject);
+            } else {
+                throw new Error("no recipes found");
+            }
+        } catch (e) {
+            console.log(e);
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/recipes/highest-view?limit=" + limit,
+                type : "get method",
+                msg : "error fetching highest view recipes",
+            };
+            return res.status(500).send({
+                errors : {
+                    recipe : errorRes
+                }
+            });
+        }
+    }
 };
 
 export default RecipeController;
