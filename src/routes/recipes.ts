@@ -8,6 +8,7 @@ recipesRoutes.get('', RecipeController.index);
 recipesRoutes.post('', RecipeController.store);
 recipesRoutes.get('/latest', RecipeController.latestRecipesWithNumberLimit);
 recipesRoutes.get('/highest-view', RecipeController.highestViewRecipesWithNumberLimit);
+recipesRoutes.get('/add-one-view', RecipeController.addOneView);
 recipesRoutes.get('/:_id', RecipeController.show);
 
 export default recipesRoutes;
