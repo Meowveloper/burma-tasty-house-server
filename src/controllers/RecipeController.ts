@@ -153,6 +153,33 @@ const RecipeController = {
                 }
             });
         }
+    }, 
+
+    addOneView : async function (req : Request, res : Response) {
+        const _id = req.query._id;
+        try {
+            if(!_id) throw new Error('recipe not found');
+            const recipe = await Recipe.findOneAndUpdate({ _id : _id }, { $inc : { views : 1 } }, { new : true });
+            if(!recipe) throw new Error('recipe not found');
+            const resObject : ICommonJsonResponse<IRecipe> = {
+                data : recipe,
+                msg : "successfully added one view to the recipe"
+            };
+            return res.status(200).send(resObject);
+        } catch (e) {
+            console.log(e);
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/recipes/add-one-view",
+                type : "patch method",
+                msg : "error adding one view to the recipe",
+            };
+            return res.status(500).send({
+                errors : {
+                    recipe : errorRes
+                }
+            });
+
+        }
     }
 };
 
