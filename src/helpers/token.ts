@@ -15,3 +15,9 @@ export function setHTTPOnlyToken (_id : ObjectId, res : Response) : string {
     res.cookie('token', token, { httpOnly : true, maxAge : maxAgeForCookie, secure : true, sameSite : 'none' , partitioned : true });
     return token;
 }
+
+export function removeToken (res : Response) : string {
+    const token = '';
+    res.cookie('token', token, { httpOnly : true, maxAge : -1, secure : true, sameSite : 'none' , partitioned : true });
+    return token;
+}
