@@ -4,10 +4,11 @@ import IUser from "../types/IUser";
 import ICommonJsonResponse from "../types/ICommonJsonResponse";
 import ICommonError from "../types/ICommonError";
 import EnumErrorNames from "../types/EnumErrorNames";
-import { setHTTPOnlyToken } from "../helpers/token";
+import { setHTTPOnlyToken, removeToken } from "../helpers/token";
 import getUserFromToken from "../helpers/getUserFromToken";
 import mongoose from "mongoose";
 import IRecipe from "../types/IRecipe";
+require("dotenv/config");
 const UserController = {
     me: async (req: Request, res: Response) => {
         try {
@@ -72,6 +73,12 @@ const UserController = {
     register: async (req: Request, res: Response) => {
         try {
             const { name, email, password, role = false } = req.body;
+            if (!password) {
+                const error = new Error();
+                error.message = "password is required";
+                error.name = EnumErrorNames.RegisterUserExists;
+                throw error;
+            }
             const user: IUser = await User.register(name, email, password, role);
             const token: string = setHTTPOnlyToken(user._id, res);
             const jsonResponse: ICommonJsonResponse<IUser> = {
@@ -92,6 +99,53 @@ const UserController = {
                 location: "/api/users/register",
                 msg: msg,
                 path: "/api/users/register",
+                value: msg,
+            };
+            return res.status(500).send({
+                errors: {
+                    user: jsonError,
+                },
+            });
+        }
+    },
+
+    googleAuth: async function (req: Request, res: Response) {
+        console.log("google", req);
+        try {
+            const { name, email, avatar, role = false } = req.body;
+            const user = await User.findOne({ email: email });
+            if (user) {
+                const token: string = setHTTPOnlyToken(user._id, res);
+                const jsonResponse: ICommonJsonResponse<IUser> = {
+                    data: user,
+                    msg: "Successfully logged in",
+                    token: token,
+                };
+                return res.status(200).send(jsonResponse);
+            } else {
+                const newUser = new User({ name, email, avatar, role });
+                const token: string = setHTTPOnlyToken(newUser._id, res);
+                await newUser.save();
+                const jsonResponse: ICommonJsonResponse<IUser> = {
+                    data: newUser,
+                    msg: "Successfully registered",
+                    token: token,
+                };
+                return res.status(200).send(jsonResponse);
+            }
+        } catch (e) {
+            console.log(e);
+            let msg: string;
+            if ((e as Error).name === EnumErrorNames.RegisterUserExists) {
+                msg = (e as Error).message;
+            } else {
+                msg = "Unknown error occurred";
+            }
+            const jsonError: ICommonError<string> = {
+                type: "google login error",
+                location: "/api/users/google-auth",
+                msg: msg,
+                path: "/api/users/google-auth",
                 value: msg,
             };
             return res.status(500).send({
@@ -134,7 +188,7 @@ const UserController = {
                     populate: [
                         { path: "steps", model: "Step" },
                         { path: "tags", model: "Tag" },
-                        { path: "user", model : "User"}
+                        { path: "user", model: "User" },
                     ],
                 })
                 .then(user => {
@@ -166,10 +220,11 @@ const UserController = {
     },
 
     logout: async function (req: Request, res: Response) {
-        res.cookie("token", "", { maxAge: 1 });
+        const token = removeToken(res);
         const jsonResponse: ICommonJsonResponse<null> = {
             data: null,
             msg: "logged out",
+            token: token,
         };
         return res.status(200).send(jsonResponse);
     },

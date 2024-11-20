@@ -12,14 +12,12 @@ userRoutes.post('/register',[
     body('name').notEmpty().withMessage('name is required'), 
     body('password').notEmpty().withMessage('password is required') 
 ], handleErrorMessage, UserController.register);
+
+userRoutes.post('/google-auth', UserController.googleAuth);
 userRoutes.get('/user-with-recipe/:userId', UserController.getUserPopulatedWithRecipes);
 
 userRoutes.post('/logout', UserController.logout);
 
-// userRoutes.get('/login/google', (req : Request, res : Response) => {
-//     console.log('request', req);
-//     console.log('response', res);
-// })
 
 
 export default userRoutes;
