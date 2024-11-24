@@ -80,22 +80,23 @@ const RecipeSchema = new Schema<IRecipe>(
 
 RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | void> {
     console.log("the files", req.files);
-    let uploadedFileUrls: Array<{ url: string; type: EnumCloudinaryFileTypes }> = [];
+    let uploadedFileUrls: Array<{ url: string; type: EnumCloudinaryFileTypes.image } | { url : string | null; type: EnumCloudinaryFileTypes.video}> = [];
     try {
         if (!req.files?.image) throw new Error("Recipe image is required!!");
         const recipeImage = req.files.image as UploadedFile;
-        const recipeVideo = req.files.video as UploadedFile;
-
+        const recipeVideo = req.files?.video ? req.files.video as UploadedFile : undefined;
+        
         const [imageCloudUrl, videoCloudUrl] = await Promise.all([uploadFilesToCloudinary(recipeImage, EnumCloudinaryFileTypes.image), uploadFilesToCloudinary(recipeVideo, EnumCloudinaryFileTypes.video)]);
 
-        if (!imageCloudUrl || !videoCloudUrl) throw new Error("Error uploading files to Cloudinary");
+        if(recipeVideo && !videoCloudUrl) throw new Error("Error uploading video to Cloudinary");
+        if (!imageCloudUrl) throw new Error("Error uploading files to Cloudinary");
 
         uploadedFileUrls.push({ url: imageCloudUrl, type: EnumCloudinaryFileTypes.image }, { url: videoCloudUrl, type: EnumCloudinaryFileTypes.video });
 
         const recipe: IRecipe = new Recipe({
             ...req.body,
             image: imageCloudUrl,
-            video: videoCloudUrl,
+            video: videoCloudUrl ? videoCloudUrl : undefined,
         });
 
         const steps = await Promise.all(
