@@ -12,8 +12,9 @@ cloudinary.config({
 });
 
 
-async function uploadFilesToCloudinary(file: UploadedFile, fileType: EnumCloudinaryFileTypes): Promise<string | null> {
+async function uploadFilesToCloudinary(file: UploadedFile | undefined, fileType: EnumCloudinaryFileTypes): Promise<string | null> {
     try {
+        if(!file) return null;
         const folderName = process.env.ENVIRONMENT === "production" ? "burma-tasty-house-production" : "burma-tasty-house";
         const byteArrayBuffer = fs.readFileSync(file.tempFilePath);
         const url: string | null = await new Promise((resolve, reject) => {
