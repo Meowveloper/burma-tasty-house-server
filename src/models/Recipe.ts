@@ -82,28 +82,39 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
     console.log("the files", req.files);
     let uploadedFileUrls: Array<{ url: string; type: EnumCloudinaryFileTypes.image } | { url : string | null; type: EnumCloudinaryFileTypes.video}> = [];
     try {
+        // Check if the recipe image is present in the request files
         if (!req.files?.image) throw new Error("Recipe image is required!!");
+        
+        // Extract the recipe image and video from the request files
         const recipeImage = req.files.image as UploadedFile;
         const recipeVideo = req.files?.video ? req.files.video as UploadedFile : undefined;
         
+        // Upload the recipe image and video to Cloudinary
         const [imageCloudUrl, videoCloudUrl] = await Promise.all([uploadFilesToCloudinary(recipeImage, EnumCloudinaryFileTypes.image), uploadFilesToCloudinary(recipeVideo, EnumCloudinaryFileTypes.video)]);
 
+        // Check if the video upload was successful
         if(recipeVideo && !videoCloudUrl) throw new Error("Error uploading video to Cloudinary");
+
+        // Check if the image upload was successful
         if (!imageCloudUrl) throw new Error("Error uploading files to Cloudinary");
 
+        // Add the image and video URLs to the uploadedFileUrls array for deletion if an error occurs
         uploadedFileUrls.push({ url: imageCloudUrl, type: EnumCloudinaryFileTypes.image }, { url: videoCloudUrl, type: EnumCloudinaryFileTypes.video });
 
+        // Create a new recipe document with image and video urls
         const recipe: IRecipe = new Recipe({
             ...req.body,
             image: imageCloudUrl,
             video: videoCloudUrl ? videoCloudUrl : undefined,
         });
 
+        // Create the steps for the recipe using steps data from Request
         const steps = await Promise.all(
             req.body.steps.map(async (stepData: IStep) => {
+                // Extract the each step image from the request files
                 const stepImage = req.files![`step_image_${stepData.sequence_number}`] as UploadedFile;
-                console.log(`the step_image_${stepData.sequence_number}`, stepImage);
 
+                // Upload the step image to Cloudinary
                 let imageUrl: string | null = "";
                 if (stepImage) {
                     // Wait for Cloudinary upload to complete and get the URL
@@ -121,23 +132,29 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
             })
         );
 
+        // Add the step image URLs to the uploadedFileUrls array for deletion if an error occurs
         const stepImageUrls = steps
             .filter((step: IStep) => step.image && typeof step.image === "string") // Ensures image is defined and is a string
             .map((step: IStep) => ({ url: step.image, type: EnumCloudinaryFileTypes.image }));
         uploadedFileUrls = [...uploadedFileUrls, ...stepImageUrls];
 
+        // Save steps to the database
         await Step.insertMany(steps);
         recipe.steps = steps.map((step: IStep) => step._id);
 
+        // Find existing tags and new tags
         const tagNames = Array.isArray(req.body.tags) ? req.body.tags.map((tag: any) => tag.trim().toLowerCase()) : req.body.tags.split(",").map((tag: string) => tag.trim().toLowerCase());
-        console.log('tag names', tagNames);
         let existingTags: Array<mongoose.Document<unknown, {}, ITag> & ITag & Required<{ _id: Schema.Types.ObjectId }>> = await Tag.find({ name: { $in: tagNames } });
         let newTags: Array<mongoose.Document<unknown, {}, ITag> & ITag & Required<{ _id: Schema.Types.ObjectId }>> = tagNames.filter((name: any) => !existingTags.find(tag => tag.name === name)).map((name: any) => new Tag({ name, recipes: [recipe._id] }));
 
+        // save recipe to database
         recipe.tags = [...existingTags, ...newTags].map(tag => tag._id);
         await recipe.save();
 
+        // Save new tags to the database
         await Tag.insertMany(newTags);
+
+        // update new tags
         if (existingTags.length) {
             const updateOps = existingTags.map(tag => ({
                 updateOne: { filter: { _id: tag._id }, update: { $push: { recipes: recipe._id } } },
@@ -145,6 +162,7 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
             await Tag.bulkWrite(updateOps);
         }
 
+        // update user
         await User.findByIdAndUpdate(recipe.user, { $push: { recipes: recipe._id } }, { new: true });
         return recipe;
     } catch (e) {
