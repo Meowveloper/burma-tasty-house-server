@@ -216,6 +216,28 @@ const RecipeController = {
             });
 
         }
+    }, 
+
+    destroy : async function (req : Request, res : Response) {
+        try {
+            const recipe : IRecipe = await Recipe.destroy(req);
+            const resObject : ICommonJsonResponse<IRecipe> = {
+                data : recipe,
+                msg : "Successfully deleted a recipe. id => " + recipe._id
+            };
+            return res.status(200).send(resObject);
+        } catch (e) {
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/recipes/:id",
+                type : "delete method",
+                msg : "error deleting recipe",
+            };
+            return res.status(500).send({
+                errors : {
+                    recipe : errorRes
+                }
+            });
+        }
     }
 };
 

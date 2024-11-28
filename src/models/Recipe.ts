@@ -1,4 +1,4 @@
-import mongoose, { Model, ObjectId, Schema } from "mongoose";
+import mongoose, { Model, Schema } from "mongoose";
 import IRecipe from "../types/IRecipe";
 import User from "./User";
 import { Request } from "express";
@@ -12,8 +12,9 @@ import EnumCloudinaryFileTypes from "../types/EnumCloudinaryFileTypes";
 import deleteFileFromCloudinary from "../helpers/deleteFileFromCloudinary";
 
 interface IRecipeModel extends Model<IRecipe> {
-    store: (req: Request) => IRecipe;
-    update: (req: Request) => IRecipe;
+    store: (req: Request) => Promise<IRecipe>;
+    update: (req: Request) => Promise<IRecipe>;
+    destroy: (req: Request) => Promise<IRecipe>;
 }
 
 const RecipeSchema = new Schema<IRecipe>(
@@ -75,7 +76,7 @@ const RecipeSchema = new Schema<IRecipe>(
     }
 );
 
-RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | void> {
+RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe> {
     console.log("the files", req.files);
     let uploadedFileUrls: Array<{ url: string; type: EnumCloudinaryFileTypes.image } | { url: string | null; type: EnumCloudinaryFileTypes.video }> = [];
     try {
@@ -174,7 +175,7 @@ RecipeSchema.statics.store = async function (req: Request): Promise<IRecipe | vo
     }
 };
 
-RecipeSchema.statics.update = async function (req: Request) {
+RecipeSchema.statics.update = async function (req: Request) : Promise<IRecipe>{
     try {
         const recipe : IRecipe = await this.findById(req.body._id);
         console.log('steps', req.body.steps);
@@ -261,10 +262,19 @@ RecipeSchema.statics.update = async function (req: Request) {
     }
 };
 
+
+RecipeSchema.statics.destroy = async function (req: Request): Promise<IRecipe> {
+    try {
+        const recipe = await this.findByIdAndDelete(req.params._id);
+        if (!recipe) throw new Error("recipe not found");
+        return recipe;
+    } catch (e) {
+        console.log("Error in model", e);
+        throw new Error((e as Error).message);
+    }
+};
+
 const Recipe: IRecipeModel = mongoose.model<IRecipe, IRecipeModel>("Recipe", RecipeSchema);
 export default Recipe;
 
 
-async function deleteSteps(stepIds : Array<IStep['_id']>) {
-
-}
