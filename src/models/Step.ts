@@ -2,7 +2,7 @@ import mongoose, { Document, Model, Schema } from "mongoose"
 import IStep from "../types/IStep";
 
 interface IStepModel extends Model<IStep> {
-
+    deleteMultipleSteps : (stepIds : mongoose.Schema.Types.ObjectId[]) => Promise<void>
 }
 const StepSchema : mongoose.Schema<IStep> = new Schema<IStep>({
     recipe_id : {
@@ -28,6 +28,10 @@ const StepSchema : mongoose.Schema<IStep> = new Schema<IStep>({
 {
     timestamps : true
 });
+
+StepSchema.statics.deleteMultipleSteps = async function (stepIds : mongoose.Schema.Types.ObjectId[]) {
+    await this.deleteMany({ _id : { $in : stepIds } });
+}
 
 const Step : IStepModel = mongoose.model<IStep, IStepModel>('Step', StepSchema);
 export default Step;

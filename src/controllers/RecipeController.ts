@@ -3,7 +3,6 @@ import IRecipe from "../types/IRecipe";
 import Recipe from "../models/Recipe";
 import ICommonError from "../types/ICommonError";
 import ICommonJsonResponse from "../types/ICommonJsonResponse";
-import { populate } from "dotenv";
 
 const RecipeController = {
     index: async function (req: Request, res: Response) {
@@ -36,7 +35,13 @@ const RecipeController = {
 
     show: async function (req: Request, res: Response) {
         try {
-            const recipe: IRecipe | null = await Recipe.findById(req.params._id);
+            const recipe: IRecipe | null = await Recipe.findById(req.params._id).populate(
+                [
+                    { path: "steps", model: "Step" },
+                    { path: "tags", model: "Tag" },
+                    { path: "user", model : "User"}
+                ]
+            );
             if (recipe) {
                 const resObject: ICommonJsonResponse<IRecipe> = {
                     data: recipe,
@@ -61,6 +66,8 @@ const RecipeController = {
         }
     },
 
+
+
     store: async function (req: Request, res: Response) {
         req.body.steps = req.body.steps.map((item : string) => JSON.parse(item));
         try {
@@ -80,6 +87,31 @@ const RecipeController = {
             return res.status(500).send({
                 errors: {
                     recipe: errorRes
+                }
+            });
+        }
+    },
+
+    update : async function(req : Request, res : Response) {
+        try {
+            req.body.steps = req.body.steps.map((item : string) => JSON.parse(item));
+            req.body.tags = req.body.tags.map((item : string) => JSON.parse(item));
+            console.log('tags', req.body.tags);
+            const recipe : IRecipe = await Recipe.update(req);
+            const resObject : ICommonJsonResponse<IRecipe> = {
+                data : recipe,
+                msg : "Successfully updated a recipe. id => " + recipe._id
+            };
+            return res.status(200).send(resObject);
+        } catch (e) {
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/recipes/:id",
+                type : "put method",
+                msg : "error updating recipe",
+            };
+            return res.status(500).send({
+                errors : {
+                    recipe : errorRes
                 }
             });
         }

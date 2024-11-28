@@ -15,7 +15,7 @@ const TagSchema = new Schema<ITag>({
         ref : "Recipe", 
         required : true
     }
-});
+}, { timestamps : true });
 
 const Tag : ITagModel = mongoose.model<ITag, ITagModel>('Tag', TagSchema);
 export default Tag;
