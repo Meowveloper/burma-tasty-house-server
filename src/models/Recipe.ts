@@ -209,7 +209,7 @@ RecipeSchema.statics.update = async function (req: Request) {
                 } else {
                     let imageUrl : string | null = null;
                     console.log('new step', step);
-                    const stepImage = req.files![`step_image_${step.sequence_number}`] as UploadedFile;
+                    const stepImage = req.files ? req.files![`step_image_${step.sequence_number}`] as UploadedFile : null;
                     if(stepImage) {
                         imageUrl = await uploadFilesToCloudinary(stepImage, EnumCloudinaryFileTypes.image);
                         if(!imageUrl) throw new Error('step image upload failed');
@@ -228,14 +228,24 @@ RecipeSchema.statics.update = async function (req: Request) {
 
         //tags
         const newTags = req.body.tags.filter((tag: any) => !Object.keys(tag).includes('_id')).map((tag: any) => new Tag({ name: tag.name, recipes: [recipe._id] })); // if the tag has id, it is not new
+        const tagNames = newTags.map((tag: any) => tag.name.trim().toLowerCase());
+        let existingTags: Array<mongoose.Document<unknown, {}, ITag> & ITag & Required<{ _id: Schema.Types.ObjectId }>> = await Tag.find({ name: { $in: tagNames } });
+        let actualNewTags: Array<mongoose.Document<unknown, {}, ITag> & ITag & Required<{ _id: Schema.Types.ObjectId }>> = tagNames.filter((name: any) => !existingTags.find(tag => tag.name === name)).map((name: any) => new Tag({ name, recipes: [recipe._id] }));
         //if new tags create new tags in db
-        console.log('new tags', newTags);
+        console.log('new tags', actualNewTags);
 
-        Tag.insertMany(newTags);
+        Tag.insertMany(actualNewTags);
+
+        if (existingTags.length) {
+            const updateOps = existingTags.map(tag => ({
+                updateOne: { filter: { _id: tag._id }, update: { $push: { recipes: recipe._id } } },
+            }));
+            await Tag.bulkWrite(updateOps);
+        }
 
         //insert new tags and old tags into recipe
         const oldTags = req.body.tags.filter((tag: any) => Object.keys(tag).includes('_id')).map((tag: any) => tag._id);
-        recipe.tags = [...oldTags, ...newTags.map((tag: any) => tag._id)];
+        recipe.tags = [...oldTags,...existingTags.map((tag: any) => tag._id), ...actualNewTags.map((tag: any) => tag._id)];
 
         recipe.title = req.body.title;
         recipe.description = req.body.description;

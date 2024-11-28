@@ -6,14 +6,17 @@ import ICommonError from "../types/ICommonError";
 const StepController = {
     deleteMultipleSteps : async function(req : Request, res : Response) {
         try {
-            const stepIds = req.body.stepIds as Array<IStep['_id']>;
-            await Step.deleteMultipleSteps(stepIds);
+            console.log('req body steps', req.body);
+            const stepIds = req.body.data as Array<IStep['_id']>;
 
             const jsonResponse : ICommonJsonResponse<null> = {
                 data : null,
                 msg : "Successfully deleted steps",
             }
 
+            if(stepIds && stepIds.length > 0) {
+                await Step.deleteMultipleSteps(stepIds);
+            }
             return res.status(200).send(jsonResponse);
         } catch (e) {
            console.log(e);

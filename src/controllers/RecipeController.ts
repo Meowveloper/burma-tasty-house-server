@@ -93,10 +93,14 @@ const RecipeController = {
     },
 
     update : async function(req : Request, res : Response) {
+        console.log('here', 'here');
         try {
+            console.log('tags ', req.body.tags);
+            console.log('steps ', req.body.steps);
             req.body.steps = req.body.steps.map((item : string) => JSON.parse(item));
             req.body.tags = req.body.tags.map((item : string) => JSON.parse(item));
-            console.log('tags', req.body.tags);
+            console.log('tags parsed', req.body.tags);
+            console.log('steps parsed', req.body.steps);
             const recipe : IRecipe = await Recipe.update(req);
             const resObject : ICommonJsonResponse<IRecipe> = {
                 data : recipe,

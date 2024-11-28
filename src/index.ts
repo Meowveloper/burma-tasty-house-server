@@ -9,6 +9,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import recipesRoutes from "./routes/recipes";
 import stepRoutes from "./routes/steps";
+import tagRoutes from "./routes/tags";
 require("dotenv/config");
 
 const app = express();
@@ -37,7 +38,8 @@ app.use(cookieParser()); // to manage cookies
 // routes ---
 app.use("/api/users", userRoutes);
 app.use("/api/recipes", recipesRoutes);
-app.use("api/steps", stepRoutes);
+app.use("/api/steps", stepRoutes);
+app.use("/api/tags", tagRoutes);
 
 app.get("/", (req: Request, res: Response) => {
     res.json("hello world from burma-tasty-house");
