@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-import path from "path";
 import EnumCloudinaryFileTypes from "../types/EnumCloudinaryFileTypes";
 import extractPublicIdFromCloudinarySecureUrl from "./extractPublicIdFromCloudinarySecureUrl";
 
