@@ -267,6 +267,9 @@ RecipeSchema.statics.destroy = async function (req: Request): Promise<IRecipe> {
     try {
         const recipe = await this.findByIdAndDelete(req.params._id);
         if (!recipe) throw new Error("recipe not found");
+        await deleteAllStepsFromRecipe(recipe.steps);
+        await removeRecipeFromMultipleTags(recipe.tags, recipe._id);
+        await removeRecipeFromUserRecipes(recipe.user, recipe._id);
         return recipe;
     } catch (e) {
         console.log("Error in model", e);
@@ -277,4 +280,31 @@ RecipeSchema.statics.destroy = async function (req: Request): Promise<IRecipe> {
 const Recipe: IRecipeModel = mongoose.model<IRecipe, IRecipeModel>("Recipe", RecipeSchema);
 export default Recipe;
 
+// helper functions
+async function deleteAllStepsFromRecipe (ids : Array<IStep['_id']>) : Promise<void>
+{   try {
+        await Step.deleteMany({ _id: { $in: ids } });
+    } catch (e) {
+        console.log(e);
+       throw new Error((e as Error).message); 
+    } 
+}
+
+async function removeRecipeFromMultipleTags (tagIds : mongoose.Schema.Types.ObjectId[], recipeId : mongoose.Schema.Types.ObjectId) {
+    try {
+        await Tag.updateMany({ _id : { $in : tagIds } }, { $pull : { recipes : recipeId } });
+    } catch (e) {
+        console.log(e);
+        throw new Error((e as Error).message);
+    }
+}
+
+async function removeRecipeFromUserRecipes (userId : mongoose.Schema.Types.ObjectId, recipeId : mongoose.Schema.Types.ObjectId) {
+    try {
+        await User.updateOne({ _id : userId }, { $pull : { recipes : recipeId } });
+    } catch (e) {
+        console.log(e);
+        throw new Error((e as Error).message);
+    }
+}
 
