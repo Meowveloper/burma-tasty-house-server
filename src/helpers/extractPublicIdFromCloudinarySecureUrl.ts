@@ -41,12 +41,22 @@ function extractPublicIdFromCloudinarySecureUrl(secureUrl: string): string {
         const publicId = folderPath 
             ? `${folderPath}/${fileNameWithoutExtension}` 
             : fileNameWithoutExtension;
+
+        // ----------
+
+        const pathParts = publicId.split('/');
+        const uploadIndex = pathParts.indexOf('upload');
+
+        if (uploadIndex === -1 || pathParts.length <= uploadIndex + 2) {
+            throw new Error('Invalid Cloudinary URL format');
+        }
         
-        return publicId;
+        return pathParts.slice(uploadIndex + 2).join('/');
     } catch (error) {
         console.error('Error extracting public ID:', error);
         throw new Error('Unable to extract public ID from Cloudinary URL');
     }
 }
+
 
 export default extractPublicIdFromCloudinarySecureUrl;

@@ -10,6 +10,7 @@ import uploadFilesToCloudinary from "../helpers/uploadFilesToCloudinary";
 import ITag from "../types/ITag";
 import EnumCloudinaryFileTypes from "../types/EnumCloudinaryFileTypes";
 import deleteFileFromCloudinary from "../helpers/deleteFileFromCloudinary";
+import { deleteAllStepsFromRecipe, removeRecipeFromMultipleTags, removeRecipeFromUserRecipes } from "../helpers/generalHelpers";
 
 interface IRecipeModel extends Model<IRecipe> {
     store: (req: Request) => Promise<IRecipe>;
@@ -267,9 +268,28 @@ RecipeSchema.statics.destroy = async function (req: Request): Promise<IRecipe> {
     try {
         const recipe = await this.findByIdAndDelete(req.params._id);
         if (!recipe) throw new Error("recipe not found");
-        await deleteAllStepsFromRecipe(recipe.steps);
+
+        //delete recipe in tags
         await removeRecipeFromMultipleTags(recipe.tags, recipe._id);
+
+        //delete recipe in user
         await removeRecipeFromUserRecipes(recipe.user, recipe._id);
+
+        // delete steps images
+        const steps = await Step.find({ _id: { $in: recipe.steps } });
+        const stepImages = steps.map((step : IStep) => step.image);
+
+        // delete image and video in cloudinary
+        await Promise.all([
+            console.log('deleting files'),
+            deleteFileFromCloudinary(recipe.image, EnumCloudinaryFileTypes.image),
+            deleteFileFromCloudinary(recipe.video, EnumCloudinaryFileTypes.video),
+            stepImages.map((image : string | null) => deleteFileFromCloudinary(image, EnumCloudinaryFileTypes.image))
+        ]);
+
+        await deleteAllStepsFromRecipe(recipe.steps);
+
+        
         return recipe;
     } catch (e) {
         console.log("Error in model", e);
@@ -280,31 +300,4 @@ RecipeSchema.statics.destroy = async function (req: Request): Promise<IRecipe> {
 const Recipe: IRecipeModel = mongoose.model<IRecipe, IRecipeModel>("Recipe", RecipeSchema);
 export default Recipe;
 
-// helper functions
-async function deleteAllStepsFromRecipe (ids : Array<IStep['_id']>) : Promise<void>
-{   try {
-        await Step.deleteMany({ _id: { $in: ids } });
-    } catch (e) {
-        console.log(e);
-       throw new Error((e as Error).message); 
-    } 
-}
-
-async function removeRecipeFromMultipleTags (tagIds : mongoose.Schema.Types.ObjectId[], recipeId : mongoose.Schema.Types.ObjectId) {
-    try {
-        await Tag.updateMany({ _id : { $in : tagIds } }, { $pull : { recipes : recipeId } });
-    } catch (e) {
-        console.log(e);
-        throw new Error((e as Error).message);
-    }
-}
-
-async function removeRecipeFromUserRecipes (userId : mongoose.Schema.Types.ObjectId, recipeId : mongoose.Schema.Types.ObjectId) {
-    try {
-        await User.updateOne({ _id : userId }, { $pull : { recipes : recipeId } });
-    } catch (e) {
-        console.log(e);
-        throw new Error((e as Error).message);
-    }
-}
 
