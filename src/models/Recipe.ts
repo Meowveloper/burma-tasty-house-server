@@ -64,13 +64,18 @@ const RecipeSchema = new Schema<IRecipe>(
         steps: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "Step",
-            required: false,
+            required: true,
         },
         tags: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "Tag",
             required: true,
         },
+        comments : {
+            type : [mongoose.Schema.Types.ObjectId], 
+            ref : "Comment", 
+            required : false
+        }
     },
     {
         timestamps: true,
