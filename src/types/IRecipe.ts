@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 import IUser from "./IUser";
 import IStep from "./IStep";
 import ITag from "./ITag";
+import IComment from "./IComment";
 
 interface IRecipe extends Document {
     _id : mongoose.Schema.Types.ObjectId;
@@ -16,6 +17,7 @@ interface IRecipe extends Document {
     views? : number;
     steps? : mongoose.Schema.Types.ObjectId[] | IStep[];
     tags? : mongoose.Schema.Types.ObjectId[] | ITag[];
+    comments? : mongoose.Schema.Types.ObjectId[] | IComment[];
     createdAt? : Date; 
     updatedAt? : Date;
 }

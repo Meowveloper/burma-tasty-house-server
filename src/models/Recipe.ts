@@ -64,13 +64,18 @@ const RecipeSchema = new Schema<IRecipe>(
         steps: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "Step",
-            required: false,
+            required: true,
         },
         tags: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "Tag",
             required: true,
         },
+        comments : {
+            type : [mongoose.Schema.Types.ObjectId], 
+            ref : "Comment", 
+            required : false
+        }
     },
     {
         timestamps: true,
@@ -194,12 +199,12 @@ RecipeSchema.statics.update = async function (req: Request) : Promise<IRecipe>{
         }
 
         if (imageUrlToBeUpdated) {
-            // await deleteFileFromCloudinary(recipe.image, EnumCloudinaryFileTypes.image);
+            await deleteFileFromCloudinary(recipe.image, EnumCloudinaryFileTypes.image);
             recipe.image = imageUrlToBeUpdated;
         }
 
         if (videoUrlToBeUpdated) {
-            // await deleteFileFromCloudinary(recipe.video, EnumCloudinaryFileTypes.video);
+            await deleteFileFromCloudinary(recipe.video, EnumCloudinaryFileTypes.video);
             recipe.video = videoUrlToBeUpdated;
         }
 
@@ -215,6 +220,7 @@ RecipeSchema.statics.update = async function (req: Request) : Promise<IRecipe>{
                     if(stepImage) {
                         imageUrl = await uploadFilesToCloudinary(stepImage, EnumCloudinaryFileTypes.image);
                         if(!imageUrl) throw new Error('step image upload failed');
+                        await deleteFileFromCloudinary(step.image, EnumCloudinaryFileTypes.image);
                     }
                     const newStep = new Step({
                         ...step,
