@@ -28,6 +28,9 @@ const CommentSchema = new Schema<IComment>({
         required : false,
         default : null
     }
+}, 
+{
+    timestamps : true
 });
 
 CommentSchema.statics.store_with_socket = async function(data : IComment) : Promise<IComment> {
