@@ -7,6 +7,8 @@ interface IComment {
     user : IUser['_id'];
     body : string, 
     replies? : Array<IComment['_id']> | Array<IComment>;
+    createdAt? : Date;
+    updatedAt? : Date;
 }
 
 export default IComment;
