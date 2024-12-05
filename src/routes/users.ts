@@ -14,6 +14,8 @@ userRoutes.post('/register',[
 ], handleErrorMessage, UserController.register);
 
 userRoutes.post('/google-auth', UserController.googleAuth);
+userRoutes.post('/add-followings', UserController.addFollowings);
+userRoutes.post('/remove-followings', UserController.removeFollowings);
 userRoutes.get('/user-with-recipe/:userId', UserController.getUserPopulatedWithRecipes);
 
 userRoutes.post('/logout', UserController.logout);

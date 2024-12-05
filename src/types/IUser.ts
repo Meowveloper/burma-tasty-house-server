@@ -8,7 +8,11 @@ interface IUser extends Document {
     avatar? : string;
     role : boolean;
     recipes? : mongoose.Schema.Types.ObjectId[] | IRecipe[]
-    comments? : mongoose.Schema.Types.ObjectId[]
+    comments? : mongoose.Schema.Types.ObjectId[];
+    followers? : mongoose.Schema.Types.ObjectId[];
+    followings? : mongoose.Schema.Types.ObjectId[];
+    createdAt? : Date;
+    updatedAt? : Date;
 }
 
 export interface IUserPopulatedWithRecipes extends IUser {

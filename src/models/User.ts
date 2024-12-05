@@ -5,6 +5,8 @@ import EnumErrorNames from "../types/EnumErrorNames";
 interface IUserModel extends Model<IUser> {
     register: (name: IUser["name"], email: IUser["email"], password: IUser["password"], role: IUser["role"]) => Promise<IUser>;
     login: (email: IUser["email"], password: IUser["password"]) => Promise<IUser>;
+    addFollowings: (followed : IUser['_id'], follower : IUser['_id']) => Promise<void>;
+    removeFollowings: (followed : IUser['_id'], follower : IUser['_id']) => Promise<void>;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -38,6 +40,17 @@ const UserSchema = new Schema<IUser>(
         comments: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "Comment",
+            required: false,
+        },
+
+        followers: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "User",
+            required: false,
+        },
+        followings: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "User",
             required: false,
         },
     },
@@ -87,6 +100,35 @@ UserSchema.statics.login = async function (email: IUser["email"], password: IUse
         throw new Error((e as Error).message);
     }
 };
+
+
+UserSchema.statics.addFollowings = async function (followed : IUser['_id'], follower : IUser['_id']) {
+    try {
+        // add to the array of followers of the followed user
+        await User.updateOne({ _id: followed }, { $push: { followers: follower } });
+
+        // add to the array of followings of the follower user
+        await User.updateOne({ _id: follower }, { $push: { followings: followed } });
+
+
+    } catch (e) {
+        console.log(e);
+        throw new Error((e as Error).message);
+    }
+}
+
+UserSchema.statics.removeFollowings = async function (followed : IUser['_id'], follower : IUser['_id']) {
+    try {
+        // remove from the array of followers of the followed user
+        await User.updateOne({ _id: followed }, { $pull: { followers: follower } });
+
+        // remove from the array of followings of the follower user
+        await User.updateOne({ _id: follower }, { $pull: { followings: followed } });
+    } catch (e) {
+        console.log(e);
+        throw new Error((e as Error).message);
+    }
+}
 
 const User: IUserModel = mongoose.model<IUser, IUserModel>("User", UserSchema);
 export default User;
