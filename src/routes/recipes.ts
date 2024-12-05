@@ -10,6 +10,7 @@ recipesRoutes.put('', RecipeController.update);
 recipesRoutes.get('/latest', RecipeController.latestRecipesWithNumberLimit);
 recipesRoutes.get('/highest-view', RecipeController.highestViewRecipesWithNumberLimit);
 recipesRoutes.get('/highest-comment', RecipeController.highestCommentRecipesWithNumberLimit);
+recipesRoutes.get('/people-you-followed/latest', RecipeController.getRecipeOfPeopleYouFollowedWithNumberLimit);
 recipesRoutes.get('/add-one-view', RecipeController.addOneView);
 recipesRoutes.get('/:_id', RecipeController.show);
 recipesRoutes.delete('/:_id', RecipeController.destroy);

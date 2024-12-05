@@ -23,3 +23,16 @@ export default async function getUserFromToken (req : Request) : Promise<IUser |
         throw new Error(e.message);
     }
 }
+
+export async function getUserIdFromToken (req : Request) : Promise<IUser['_id']> {
+    try {
+        const token = req.cookies.token;
+        const decodedValue = jwt.verify(token, process.env.JWT_SECRET_KEY!) as JwtPayload;
+        if(decodedValue && typeof decodedValue !== 'string' && '_id' in decodedValue) {
+            return decodedValue._id;
+        }
+        throw new Error('Invalid token');
+    } catch (e : any) {
+        throw new Error(e.message);
+    }
+}
