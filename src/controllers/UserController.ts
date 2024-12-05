@@ -228,6 +228,66 @@ const UserController = {
         };
         return res.status(200).send(jsonResponse);
     },
+
+
+    addFollowings : async function (req : Request, res : Response) {
+        try {
+            const { followed, follower } = req.body;
+
+            await User.addFollowings(followed, follower);
+
+            const jsonResponse : ICommonJsonResponse<null> = {
+                data : null,
+                msg : "Successfully added followings",
+            };
+            
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "add followings error",
+                location : "/api/users/add-followings",
+                msg : (e as Error).message,
+                path : "/api/users/add-followings",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    },
+
+    removeFollowings : async function (req : Request, res : Response) {
+        try {
+            const { followed, follower } = req.body;
+
+            await User.removeFollowings(followed, follower);
+
+            const jsonResponse : ICommonJsonResponse<null> = {
+                data : null,
+                msg : "Successfully removed followings",
+            };
+
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "remove followings error",
+                location : "/api/users/remove-followings",
+                msg : (e as Error).message,
+                path : "/api/users/remove-followings",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    }
+    
 };
 
 export default UserController;

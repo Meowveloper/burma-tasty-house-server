@@ -3,6 +3,8 @@ import IRecipe from "../types/IRecipe";
 import Recipe from "../models/Recipe";
 import ICommonError from "../types/ICommonError";
 import ICommonJsonResponse from "../types/ICommonJsonResponse";
+import { getUserIdFromToken } from "../helpers/getUserFromToken";
+import User from "../models/User";
 
 const RecipeController = {
     index: async function (req: Request, res: Response) {
@@ -190,6 +192,89 @@ const RecipeController = {
             });
         }
     }, 
+
+
+    highestCommentRecipesWithNumberLimit : async function (req : Request, res : Response) {
+        const limit : number = req.query.limit ? Number(req.query.limit) : 5;
+        try {
+            const recipes : IRecipe[] = await Recipe.find().populate(
+                [
+                    { path: "steps", model: "Step" },
+                    { path: "tags", model: "Tag" },
+                    { path: "user", model : "User" }
+                ] 
+            ).sort({ comments: -1 }).limit(limit);
+
+            if(recipes.length > 0) {
+                const resObject : ICommonJsonResponse<IRecipe[]> = {
+                    data : recipes,
+                    msg : "Successfully fetched highest comment " + req.params.limit + " recipes"
+                }
+                return res.status(200).send(resObject);
+            } else {
+                throw new Error("no recipes found");
+            }
+        } catch (e) {
+            console.log(e);
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/recipes/highest-comment?limit=" + limit,
+                type : "get method",
+                msg : "error fetching highest comment recipes",
+            };
+            return res.status(500).send({
+                errors : {
+                    recipe : errorRes
+                }
+            });
+        }
+    },
+
+    getRecipeOfPeopleYouFollowedWithNumberLimit : async (req : Request, res : Response) => {
+        const limit = req.query.limit ? Number(req.query.limit) : 5;
+        try {
+            // get user id and find user
+            const user_id = await getUserIdFromToken(req);
+            console.log('user_id', user_id);
+            if(!user_id) throw new Error('not authenticated');
+            const user = await User.findById(user_id); 
+
+            // get followings user-ids array
+            const following_ids = user?.followings;
+            if(!following_ids) throw new Error('user not found');
+
+            // get recipes of those following users
+            const recipes = await Recipe.find({ user : { $in : following_ids } }).populate(
+                [
+                    { path: "steps", model: "Step" },
+                    { path: "tags", model: "Tag" },
+                    { path: "user", model : "User" }
+                ] 
+            ).sort({ createdAt: -1 }).limit(limit);
+
+            // make response
+            if(recipes.length > 0) {
+                const resObject : ICommonJsonResponse<IRecipe[]> = {
+                    data : recipes,
+                    msg : "Successfully fetched recipes of people you followed"
+                }
+                return res.status(200).send(resObject);
+            } else {
+                throw new Error("no recipes found");
+            }
+        } catch (e) {
+            console.log(e);
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/recipes/get-recipe-of-people-you-followed?limit=" + limit,
+                type : "get method",
+                msg : "error fetching recipes of people you followed",
+            };
+            return res.status(500).send({
+                errors : {
+                    recipe : errorRes
+                }
+            });
+        }
+    },
 
     addOneView : async function (req : Request, res : Response) {
         const _id = req.query._id;
