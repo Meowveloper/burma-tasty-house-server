@@ -3,6 +3,6 @@ interface ICommonError<T> {
     location : string, 
     msg : string, 
     path : string, 
-    value : T
+    value? : T
 }
 export default ICommonError;
