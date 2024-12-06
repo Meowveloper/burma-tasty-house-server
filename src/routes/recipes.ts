@@ -1,13 +1,18 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import RecipeController from '../controllers/RecipeController';
 
 const recipesRoutes = express.Router();
 
+recipesRoutes.post('/hello-world', (req: Request, res : Response) => {
+    console.log('req', req);
+    return res.send('hello world');
+})
 // cannot change the order of these routes (lines of code) in order to get proper route matching
 recipesRoutes.get('', RecipeController.index);
 recipesRoutes.post('', RecipeController.store);
 recipesRoutes.put('', RecipeController.update);
 recipesRoutes.get('/latest', RecipeController.latestRecipesWithNumberLimit);
+recipesRoutes.get('/sort-with-pagination/:page', RecipeController.sortWithPagination);
 recipesRoutes.get('/highest-view', RecipeController.highestViewRecipesWithNumberLimit);
 recipesRoutes.get('/highest-comment', RecipeController.highestCommentRecipesWithNumberLimit);
 recipesRoutes.get('/people-you-followed/latest', RecipeController.getRecipeOfPeopleYouFollowedWithNumberLimit);
