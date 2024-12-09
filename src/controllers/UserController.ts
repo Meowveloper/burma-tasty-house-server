@@ -290,10 +290,11 @@ const UserController = {
 
 
     addSaves : async function (req : Request, res : Response) {
+        console.log(req.body);
         try {
             const recipeId = req.body.recipe as IRecipe['_id'];
             const userId = await getUserIdFromToken(req) as IUser['_id'];
-            await User.addSaves(userId, recipeId);
+            await User.addSaves(recipeId, userId);
 
             const jsonResponse : ICommonJsonResponse<null> = {
                 data : null,
@@ -322,7 +323,7 @@ const UserController = {
         try {
             const recipeId = req.body.recipe as IRecipe['_id'];
             const userId = await getUserIdFromToken(req) as IUser['_id'];
-            await User.removeSaves(userId, recipeId);
+            await User.removeSaves(recipeId, userId);
 
             const jsonResponse : ICommonJsonResponse<null> = {
                 data : null,
