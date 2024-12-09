@@ -2,11 +2,14 @@ import mongoose, { Model, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import IUser from "../types/IUser";
 import EnumErrorNames from "../types/EnumErrorNames";
+import IRecipe from "../types/IRecipe";
 interface IUserModel extends Model<IUser> {
     register: (name: IUser["name"], email: IUser["email"], password: IUser["password"], role: IUser["role"]) => Promise<IUser>;
     login: (email: IUser["email"], password: IUser["password"]) => Promise<IUser>;
     addFollowings: (followed : IUser['_id'], follower : IUser['_id']) => Promise<void>;
     removeFollowings: (followed : IUser['_id'], follower : IUser['_id']) => Promise<void>;
+    addSaves : (recipe : IRecipe['_id'], user : IUser['_id']) => Promise<void>;
+    removeSaves : (recipe : IRecipe['_id'], user : IUser['_id']) => Promise<void>;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -53,6 +56,11 @@ const UserSchema = new Schema<IUser>(
             ref: "User",
             required: false,
         },
+        saves : {
+            type : [mongoose.Schema.Types.ObjectId],
+            ref : "Recipe",
+            required : false
+        }
     },
     {
         timestamps: true,
@@ -129,6 +137,26 @@ UserSchema.statics.removeFollowings = async function (followed : IUser['_id'], f
         throw new Error((e as Error).message);
     }
 }
+
+UserSchema.statics.addSaves = async function (recipe : IRecipe['_id'], user : IUser['_id']) {
+    try {
+        await User.updateOne({ _id : user}, { $push : { saves : recipe } });
+    } catch (e) {
+        console.log(e);
+        throw new Error((e as Error).message);
+    }
+}
+
+UserSchema.statics.removeSaves = async function (recipe : IRecipe['_id'], user : IUser['_id']) {
+    try {
+        await User.updateOne({ _id : user}, { $pull : { saves : recipe } });
+    } catch (e) {
+        console.log(e);
+        throw new Error((e as Error).message);
+    }
+}
+
+
 
 const User: IUserModel = mongoose.model<IUser, IUserModel>("User", UserSchema);
 export default User;

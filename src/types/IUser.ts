@@ -11,6 +11,7 @@ interface IUser extends Document {
     comments? : mongoose.Schema.Types.ObjectId[];
     followers? : mongoose.Schema.Types.ObjectId[];
     followings? : mongoose.Schema.Types.ObjectId[];
+    saves? : mongoose.Schema.Types.ObjectId[];
     createdAt? : Date;
     updatedAt? : Date;
 }

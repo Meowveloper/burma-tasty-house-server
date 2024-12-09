@@ -11,8 +11,9 @@ recipesRoutes.post('/hello-world', (req: Request, res : Response) => {
 recipesRoutes.get('', RecipeController.index);
 recipesRoutes.post('', RecipeController.store);
 recipesRoutes.put('', RecipeController.update);
-recipesRoutes.get('/latest', RecipeController.latestRecipesWithNumberLimit);
+recipesRoutes.get('/saved', RecipeController.getSavedRecipesOfTheLoginUser);
 recipesRoutes.get('/sort-with-pagination/:page', RecipeController.sortWithPagination);
+recipesRoutes.get('/latest', RecipeController.latestRecipesWithNumberLimit);
 recipesRoutes.get('/highest-view', RecipeController.highestViewRecipesWithNumberLimit);
 recipesRoutes.get('/highest-comment', RecipeController.highestCommentRecipesWithNumberLimit);
 recipesRoutes.get('/people-you-followed/latest', RecipeController.getRecipeOfPeopleYouFollowedWithNumberLimit);

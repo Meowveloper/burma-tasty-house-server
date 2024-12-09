@@ -5,7 +5,7 @@ import ICommonJsonResponse from "../types/ICommonJsonResponse";
 import ICommonError from "../types/ICommonError";
 import EnumErrorNames from "../types/EnumErrorNames";
 import { setHTTPOnlyToken, removeToken } from "../helpers/token";
-import getUserFromToken from "../helpers/getUserFromToken";
+import getUserFromToken, { getUserIdFromToken } from "../helpers/getUserFromToken";
 import mongoose from "mongoose";
 import IRecipe from "../types/IRecipe";
 require("dotenv/config");
@@ -278,6 +278,121 @@ const UserController = {
                 location : "/api/users/remove-followings",
                 msg : (e as Error).message,
                 path : "/api/users/remove-followings",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    },
+
+
+    addSaves : async function (req : Request, res : Response) {
+        console.log(req.body);
+        try {
+            const recipeId = req.body.recipe as IRecipe['_id'];
+            const userId = await getUserIdFromToken(req) as IUser['_id'];
+            await User.addSaves(recipeId, userId);
+
+            const jsonResponse : ICommonJsonResponse<null> = {
+                data : null,
+                msg : "Successfully added saves",
+            };
+
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "add saves error",
+                location : "/api/users/add-saves",
+                msg : (e as Error).message,
+                path : "/api/users/add-saves",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    },
+
+    removeSaves : async function (req : Request, res : Response) {
+        try {
+            const recipeId = req.body.recipe as IRecipe['_id'];
+            const userId = await getUserIdFromToken(req) as IUser['_id'];
+            await User.removeSaves(recipeId, userId);
+
+            const jsonResponse : ICommonJsonResponse<null> = {
+                data : null,
+                msg : "Successfully removed saves",
+            };
+
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "remove saves error",
+                location : "/api/users/remove-saves",
+                msg : (e as Error).message,
+                path : "/api/users/remove-saves",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    },
+
+    getPeopleYouFollowed : async function (req : Request, res : Response) {
+        try {
+            const user = await getUserFromToken(req);
+            if(!user) throw new Error("User not found");
+            const peopleYouFollowedIds = user?.followings;
+            const peopleYouFollowed = await User.find({ _id: { $in: peopleYouFollowedIds } });
+            const jsonResponse : ICommonJsonResponse<IUser[]> = {
+                data : peopleYouFollowed,
+                msg : "Successfully fetched people you follow",
+            };
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "get people you follow error",
+                location : "/api/users/get-people-you-follow",
+                msg : (e as Error).message,
+                path : "/api/users/get-people-you-follow",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    }, 
+    getYourFollowers : async function (req : Request, res : Response) {
+        try {
+            const user = await getUserFromToken(req);
+            if(!user) throw new Error("User not found");
+            const yourFollowersIds = user?.followers;
+            const yourFollowers = await User.find({ _id: { $in: yourFollowersIds } });
+            const jsonResponse : ICommonJsonResponse<IUser[]> = {
+                data : yourFollowers,
+                msg : "Successfully fetched your followers",
+            };
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "get your followers error",
+                location : "/api/users/get-your-followers",
+                msg : (e as Error).message,
+                path : "/api/users/get-your-followers",
                 value : (e as Error).message,
             };
             return res.status(500).send({

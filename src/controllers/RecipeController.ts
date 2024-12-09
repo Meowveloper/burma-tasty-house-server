@@ -3,7 +3,7 @@ import IRecipe from "../types/IRecipe";
 import Recipe from "../models/Recipe";
 import ICommonError from "../types/ICommonError";
 import ICommonJsonResponse from "../types/ICommonJsonResponse";
-import { getUserIdFromToken } from "../helpers/getUserFromToken";
+import getUserFromToken, { getUserIdFromToken } from "../helpers/getUserFromToken";
 import User from "../models/User";
 import { Schema } from "mongoose";
 const limitForPagination = 10;
@@ -367,6 +367,33 @@ const RecipeController = {
             });
         }
     },
+
+    getSavedRecipesOfTheLoginUser: async function (req: Request, res: Response) {
+        try {
+            const user = await getUserFromToken(req);
+            const savedRecipes = user?.saves || [];
+            const recipes = await Recipe.find({ _id: { $in: savedRecipes } }).populate([
+                { path: "steps", model: "Step" },
+                { path: "tags", model: "Tag" },
+                { path: "user", model: "User" },
+            ]);
+            const resObject: ICommonJsonResponse<IRecipe[]> = {
+                data: recipes,
+                msg: "Successfully fetched saved recipes",
+            };
+            return res.status(200).send(resObject);
+        } catch(e) {
+            console.log(e);
+            const errorRes: Partial<ICommonError<string>> = {
+                path: "/api/recipes/saved",
+            };
+            return res.status(500).send({
+                errors: {
+                    recipe: errorRes,
+                },
+            });
+        }
+    }
 };
 
 function isStringOrStringArray(value: any): value is string | string[] {
