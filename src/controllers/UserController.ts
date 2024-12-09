@@ -347,6 +347,61 @@ const UserController = {
             });
         }
     },
+
+    getPeopleYouFollowed : async function (req : Request, res : Response) {
+        try {
+            const user = await getUserFromToken(req);
+            if(!user) throw new Error("User not found");
+            const peopleYouFollowedIds = user?.followings;
+            const peopleYouFollowed = await User.find({ _id: { $in: peopleYouFollowedIds } });
+            const jsonResponse : ICommonJsonResponse<IUser[]> = {
+                data : peopleYouFollowed,
+                msg : "Successfully fetched people you follow",
+            };
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "get people you follow error",
+                location : "/api/users/get-people-you-follow",
+                msg : (e as Error).message,
+                path : "/api/users/get-people-you-follow",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    }, 
+    getYourFollowers : async function (req : Request, res : Response) {
+        try {
+            const user = await getUserFromToken(req);
+            if(!user) throw new Error("User not found");
+            const yourFollowersIds = user?.followers;
+            const yourFollowers = await User.find({ _id: { $in: yourFollowersIds } });
+            const jsonResponse : ICommonJsonResponse<IUser[]> = {
+                data : yourFollowers,
+                msg : "Successfully fetched your followers",
+            };
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "get your followers error",
+                location : "/api/users/get-your-followers",
+                msg : (e as Error).message,
+                path : "/api/users/get-your-followers",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
+    }
     
 };
 
