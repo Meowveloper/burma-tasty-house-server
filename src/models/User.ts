@@ -3,6 +3,12 @@ import bcrypt from "bcrypt";
 import IUser from "../types/IUser";
 import EnumErrorNames from "../types/EnumErrorNames";
 import IRecipe from "../types/IRecipe";
+import { getUserIdFromToken } from "../helpers/getUserFromToken";
+import { Request } from "express";
+import { UploadedFile } from "express-fileupload";
+import deleteFileFromCloudinary from "../helpers/deleteFileFromCloudinary";
+import EnumCloudinaryFileTypes from "../types/EnumCloudinaryFileTypes";
+import uploadFilesToCloudinary from "../helpers/uploadFilesToCloudinary";
 interface IUserModel extends Model<IUser> {
     register: (name: IUser["name"], email: IUser["email"], password: IUser["password"], role: IUser["role"]) => Promise<IUser>;
     login: (email: IUser["email"], password: IUser["password"]) => Promise<IUser>;
@@ -10,6 +16,7 @@ interface IUserModel extends Model<IUser> {
     removeFollowings: (followed : IUser['_id'], follower : IUser['_id']) => Promise<void>;
     addSaves : (recipe : IRecipe['_id'], user : IUser['_id']) => Promise<void>;
     removeSaves : (recipe : IRecipe['_id'], user : IUser['_id']) => Promise<void>;
+    update: (req : Request) => Promise<IUser>;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -156,6 +163,45 @@ UserSchema.statics.removeSaves = async function (recipe : IRecipe['_id'], user :
     }
 }
 
+UserSchema.statics.update = async function (req : Request) : Promise<IUser> {
+    try {
+        // get old user info
+        const userId : Schema.Types.ObjectId = await getUserIdFromToken(req);
+        if(!userId) throw new Error("not authenticated");
+        const user = await User.findById(userId);
+        if(!user) throw new Error("user not found");
+
+        // check old password
+        const isMatch = req.body.oldPassword ? await bcrypt.compare(req.body.oldPassword, user.password) : true;
+        if(!isMatch) throw new Error("incorrect password");
+
+        // update new password
+        if(req.body.newPassword)  user.password = getHashedPassword(req.body.newPassword);
+
+        // handle avatar change
+        if(req.files?.avatar) {
+            if(user.avatar) await deleteFileFromCloudinary(user.avatar, EnumCloudinaryFileTypes.image);
+            const image = req.files.avatar as UploadedFile;
+            const imageUrl = await uploadFilesToCloudinary(image, EnumCloudinaryFileTypes.image);
+            if(!imageUrl) throw new Error("Error uploading files to Cloudinary");
+            user.avatar = imageUrl;
+        }
+
+        // handle name change
+        user.name = req.body.name;
+        await user.save();
+        return user;
+
+    } catch (e) {
+        console.log(e);
+        throw new Error((e as Error).message);
+    }
+}
+
+function getHashedPassword(password : string) {
+    const salt = bcrypt.genSaltSync(10);
+    return bcrypt.hashSync(password, salt);
+}
 
 
 const User: IUserModel = mongoose.model<IUser, IUserModel>("User", UserSchema);

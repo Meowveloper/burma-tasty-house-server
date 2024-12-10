@@ -401,7 +401,35 @@ const UserController = {
                 },
             });
         }
+    },
+
+    updateProfile : async function (req : Request, res : Response) {
+        console.log(req.body);
+        try {
+            const user : IUser = await User.update(req);
+            const jsonResponse : ICommonJsonResponse<IUser> = {
+                data : user,
+                msg : "Successfully updated profile", 
+            }
+            return res.status(200).send(jsonResponse);
+        } catch (e) {
+            console.log(e);
+            const jsonError : ICommonError<string> = {
+                type : "update profile error",
+                location : "/api/users/update-profile",
+                msg : (e as Error).message,
+                path : "/api/users/update-profile",
+                value : (e as Error).message,
+            };
+            return res.status(500).send({
+                errors : {
+                    user : jsonError,
+                },
+            });
+        }
     }
+
+
     
 };
 

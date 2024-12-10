@@ -5,6 +5,7 @@ import { handleErrorMessage } from "../middlewares/handleErrorMessages";
 const userRoutes = express.Router();
 
 userRoutes.get('', UserController.index);
+userRoutes.post('/update-profile', UserController.updateProfile);
 userRoutes.get('/me', UserController.me);
 userRoutes.post('/login', UserController.login);
 userRoutes.post('/register',[
