@@ -13,6 +13,7 @@ import stepRoutes from "./routes/steps";
 import tagRoutes from "./routes/tags";
 import commentRoutes from "./routes/comments";
 import SocketServer from "./classses/SocketServer";
+import reportRoutes from "./routes/reports";
 require("dotenv/config");
 
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/recipes", recipesRoutes);
 app.use("/api/steps", stepRoutes);
 app.use("/api/tags", tagRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/reports", reportRoutes);
 
 app.get("/", (req: Request, res: Response) => {
     res.json("hello world from burma-tasty-house");
