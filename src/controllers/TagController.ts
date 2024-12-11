@@ -59,7 +59,31 @@ const TagController = {
                 }
             });
         }
+    }, 
+
+    getAllTags : async function (req : Request, res : Response) {
+        try {
+            const tags = await Tag.find().sort({ recipes : -1});
+            const commonJsonResponse : ICommonJsonResponse<ITag[]> = {
+                data : tags, 
+                msg : "Successfully fetched all tags",
+            }
+            return res.status(200).send(commonJsonResponse);
+        } catch (e) {
+            console.log(e);
+            const errorRes : Partial<ICommonError<string>> = {
+                path : "/api/tags",
+                type : "get method",
+                msg : "error fetching tags",
+            };
+            return res.status(500).send({
+                errors : {
+                    tag : errorRes
+                }
+            });
+        }
     }
+
 };
 
 export default TagController;

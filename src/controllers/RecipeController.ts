@@ -129,12 +129,13 @@ const RecipeController = {
             const skip = (page - 1) * limitForPagination;
             const sort = getSortString(req);
             const needAuth: boolean = Boolean(Number(req.query.needAuth)) || false;
-            const filteredTagId : Schema.Types.ObjectId | null = req.query.tag && typeof req.query.tag === "string" ? new Schema.Types.ObjectId(req.query.tag) : null;
+            console.log('tag', req.query.tag);
+            const filteredTagId : string | null = req.query.tag ? String(req.query.tag) : null;
             const following_ids = await getUserFollowingIds(req);
             if (!following_ids) throw new Error("user not found");
             const recipesIdsOfTag = await getRecipesOfTag(filteredTagId);
             const query = needAuth ? Recipe.find({ user: { $in: following_ids } }) : (filteredTagId ? Recipe.find({ _id : { $in : recipesIdsOfTag }}) : Recipe.find());
-            const totalRecipes = needAuth ? following_ids.length : await Recipe.countDocuments();
+            const totalRecipes = needAuth ? following_ids.length : (filteredTagId ? recipesIdsOfTag?.length || 0 : await Recipe.countDocuments());
             const totalPages = Math.ceil(totalRecipes / limitForPagination);
             const recipes = await query
                 .populate([
@@ -425,7 +426,7 @@ async function getUserFollowingIds(req: Request) : Promise<Schema.Types.ObjectId
     return following_ids;
 }
 
-async function getRecipesOfTag(tagId : ITag['_id'] | null) : Promise<ITag['recipes']> {
+async function getRecipesOfTag(tagId : string | null) : Promise<ITag['recipes']> {
     try {
         if (tagId) {
             const tag : ITag | null = await Tag.findById(tagId);
