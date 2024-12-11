@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import IRecipe from "../types/IRecipe";
 import Recipe from "../models/Recipe";
 import ICommonError from "../types/ICommonError";
-import ICommonJsonResponse from "../types/ICommonJsonResponse";
+import ICommonJsonResponse, { IPagination } from "../types/ICommonJsonResponse";
 import getUserFromToken, { getUserIdFromToken } from "../helpers/getUserFromToken";
 import User from "../models/User";
 import { Schema } from "mongoose";
+import ITag from "../types/ITag";
+import Tag from "../models/Tag";
 const limitForPagination = 10;
 
 const RecipeController = {
@@ -124,14 +126,17 @@ const RecipeController = {
     sortWithPagination: async function (req: Request, res: Response) {
         const page = Number(req.params.page) || 1;
         try {
-            const totalRecipes = await Recipe.countDocuments();
-            const totalPages = Math.ceil(totalRecipes / limitForPagination);
             const skip = (page - 1) * limitForPagination;
             const sort = getSortString(req);
             const needAuth: boolean = Boolean(Number(req.query.needAuth)) || false;
+            console.log('tag', req.query.tag);
+            const filteredTagId : string | null = req.query.tag ? String(req.query.tag) : null;
             const following_ids = await getUserFollowingIds(req);
             if (!following_ids) throw new Error("user not found");
-            const query = needAuth ? Recipe.find({ user: { $in: following_ids } }) : Recipe.find();
+            const recipesIdsOfTag = await getRecipesOfTag(filteredTagId);
+            const query = needAuth ? Recipe.find({ user: { $in: following_ids } }) : (filteredTagId ? Recipe.find({ _id : { $in : recipesIdsOfTag }}) : Recipe.find());
+            const totalRecipes = needAuth ? following_ids.length : (filteredTagId ? recipesIdsOfTag?.length || 0 : await Recipe.countDocuments());
+            const totalPages = Math.ceil(totalRecipes / limitForPagination);
             const recipes = await query
                 .populate([
                     { path: "steps", model: "Step" },
@@ -420,5 +425,19 @@ async function getUserFollowingIds(req: Request) : Promise<Schema.Types.ObjectId
     const following_ids = user?.followings;
     return following_ids;
 }
+
+async function getRecipesOfTag(tagId : string | null) : Promise<ITag['recipes']> {
+    try {
+        if (tagId) {
+            const tag : ITag | null = await Tag.findById(tagId);
+            if(!tag) throw new Error('tag not found');
+            return tag.recipes;
+        } else throw new Error('tag not found');
+    } catch(e) {
+        console.log(e);
+        return [];
+    }
+}
+
 
 export default RecipeController;
