@@ -27,6 +27,7 @@ export default async function getUserFromToken (req : Request) : Promise<IUser |
 export async function getUserIdFromToken (req : Request) : Promise<IUser['_id']> {
     try {
         const token = req.cookies.token;
+        if(!token) throw new Error('token not found');
         const decodedValue = jwt.verify(token, process.env.JWT_SECRET_KEY!) as JwtPayload;
         if(decodedValue && typeof decodedValue !== 'string' && '_id' in decodedValue) {
             return decodedValue._id;

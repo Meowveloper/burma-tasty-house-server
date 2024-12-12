@@ -129,13 +129,13 @@ const RecipeController = {
             const skip = (page - 1) * limitForPagination;
             const sort = getSortString(req);
             const needAuth: boolean = Boolean(Number(req.query.needAuth)) || false;
-            console.log('tag', req.query.tag);
             const filteredTagId : string | null = req.query.tag ? String(req.query.tag) : null;
             const following_ids = await getUserFollowingIds(req);
-            if (!following_ids) throw new Error("user not found");
+            console.log('here', following_ids);
+            if (!following_ids && needAuth) throw new Error("user not found");
             const recipesIdsOfTag = await getRecipesOfTag(filteredTagId);
             const query = needAuth ? Recipe.find({ user: { $in: following_ids } }) : (filteredTagId ? Recipe.find({ _id : { $in : recipesIdsOfTag }}) : Recipe.find());
-            const totalRecipes = needAuth ? following_ids.length : (filteredTagId ? recipesIdsOfTag?.length || 0 : await Recipe.countDocuments());
+            const totalRecipes = (needAuth && following_ids) ? following_ids.length : (filteredTagId ? recipesIdsOfTag?.length || 0 : await Recipe.countDocuments());
             const totalPages = Math.ceil(totalRecipes / limitForPagination);
             const recipes = await query
                 .populate([
@@ -416,14 +416,18 @@ function getSortString(req: Request): string {
 
 async function getUserFollowingIds(req: Request) : Promise<Schema.Types.ObjectId[] | undefined> {
     // get user id and find user
-    const user_id = await getUserIdFromToken(req);
-    console.log("user_id", user_id);
-    if (!user_id) throw new Error("not authenticated");
-    const user = await User.findById(user_id);
+    try {
+        const user_id = await getUserIdFromToken(req);
+        console.log("user_id", user_id);
+        if (!user_id) throw new Error("not authenticated");
+        const user = await User.findById(user_id);
 
-    // get followings user-ids array
-    const following_ids = user?.followings;
-    return following_ids;
+        // get followings user-ids array
+        const following_ids = user?.followings;
+        return following_ids;
+    } catch (e) {
+        return undefined;
+    }
 }
 
 async function getRecipesOfTag(tagId : string | null) : Promise<ITag['recipes']> {
