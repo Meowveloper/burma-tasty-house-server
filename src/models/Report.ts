@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import IReport from "../types/IReport";
 
-interface IReportModal {
+interface IReportModal extends mongoose.Model<IReport> {
     store : (body : string, recipeId : mongoose.Schema.Types.ObjectId, commentId : mongoose.Schema.Types.ObjectId | null) => Promise<IReport>    
 }
 

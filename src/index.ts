@@ -14,6 +14,7 @@ import tagRoutes from "./routes/tags";
 import commentRoutes from "./routes/comments";
 import SocketServer from "./classses/SocketServer";
 import reportRoutes from "./routes/reports";
+import adminGeneralRoutes from "./routes/admin/general";
 require("dotenv/config");
 
 const app = express();
@@ -40,13 +41,16 @@ app.use(
 ); // to prevent cors error
 app.use(cookieParser()); // to manage cookies
 
-// routes ---
+// user routes ---
 app.use("/api/users", userRoutes);
 app.use("/api/recipes", recipesRoutes);
 app.use("/api/steps", stepRoutes);
 app.use("/api/tags", tagRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/reports", reportRoutes);
+
+// admin routes
+app.use('/api/admin/', adminGeneralRoutes);
 
 app.get("/", (req: Request, res: Response) => {
     res.json("hello world from burma-tasty-house");
