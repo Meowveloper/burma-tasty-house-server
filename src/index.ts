@@ -15,6 +15,7 @@ import commentRoutes from "./routes/comments";
 import SocketServer from "./classses/SocketServer";
 import reportRoutes from "./routes/reports";
 import adminGeneralRoutes from "./routes/admin/general";
+import adminReportRoutes from "./routes/admin/reports";
 require("dotenv/config");
 
 const app = express();
@@ -51,6 +52,7 @@ app.use("/api/reports", reportRoutes);
 
 // admin routes
 app.use('/api/admin/', adminGeneralRoutes);
+app.use('/api/admin/reports', adminReportRoutes);
 
 app.get("/", (req: Request, res: Response) => {
     res.json("hello world from burma-tasty-house");

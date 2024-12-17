@@ -3,7 +3,7 @@ import Tag from "../models/Tag";
 import User from "../models/User";
 import IStep from "../types/IStep";
 import mongoose from "mongoose";
-import ICommonJsonResponse from "../types/ICommonJsonResponse";
+import ICommonJsonResponse, { IPagination } from "../types/ICommonJsonResponse";
 import ICommonError from "../types/ICommonError";
 import { Response } from "express";
 export async function deleteAllStepsFromRecipe (ids : Array<IStep['_id']>) : Promise<void>
@@ -33,10 +33,11 @@ export async function removeRecipeFromUserRecipes (userId : mongoose.Schema.Type
     }
 }
 
-export async function send_response<T>(value: T, msg: string, res: Response) {
+export async function send_response<T>(value: T, msg: string, res: Response, pagination? : IPagination) {
     const commonResponse: ICommonJsonResponse<T> = {
         data: value,
         msg: msg,
+        pagination : pagination
     };
     return res.status(200).send(commonResponse);
 }
