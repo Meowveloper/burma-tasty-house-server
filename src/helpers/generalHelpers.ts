@@ -5,7 +5,8 @@ import IStep from "../types/IStep";
 import mongoose from "mongoose";
 import ICommonJsonResponse, { IPagination } from "../types/ICommonJsonResponse";
 import ICommonError from "../types/ICommonError";
-import { Response } from "express";
+import { Request, Response } from "express";
+import getUserFromToken from "./getUserFromToken";
 export async function deleteAllStepsFromRecipe (ids : Array<IStep['_id']>) : Promise<void>
 {   try {
         await Step.deleteMany({ _id: { $in: ids } });
@@ -56,4 +57,22 @@ export async function send_error_response<T>(value: T, e : Error, path: string, 
             [field] : err_response
         }
     })
+}
+
+
+export async function throw_error_if_not_authenticated_for_admin(req : Request, res : Response) {
+    try {
+        // check token
+        const token = req.cookies.token;
+        if(!token) throw new Error('not authenticated');
+
+        // check if user is admin
+        const user = await getUserFromToken(req);
+        if(!user || !user.role) throw new Error('not authenticated or not admin');
+
+
+    } catch (e) {
+        send_error_response(null, e as Error, "/api/admin", "throw_error_if_not_authenticated_for_admin", res);
+    }
+
 }

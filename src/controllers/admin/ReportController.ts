@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import Report from "../../models/Report";
-import { send_response, send_error_response } from "../../helpers/generalHelpers";
+import { send_response, send_error_response, throw_error_if_not_authenticated_for_admin } from "../../helpers/generalHelpers";
 import { IPagination } from "../../types/ICommonJsonResponse";
 import { Query } from "mongoose";
 const AdminReportController = {
     report_with_pagination: async function (req: Request, res: Response) {
+        throw_error_if_not_authenticated_for_admin(req, res);
         try {
             const { limit, page } = get_page_and_limit_from_request(req);
 
@@ -28,6 +29,7 @@ const AdminReportController = {
     },
 
     show : async function (req : Request, res : Response) {
+        throw_error_if_not_authenticated_for_admin(req, res);
         try {
             const report_id = req.query.report_id;
             if(!report_id) throw new Error('report not found');
@@ -44,6 +46,18 @@ const AdminReportController = {
             send_response(report, "Successfully fetched report", res);
         } catch (e) {
             send_error_response(null, e as Error, "/api/admin/reports", "show", res);
+        }
+    }, 
+
+    destroy : async function (req : Request, res : Response) {
+        throw_error_if_not_authenticated_for_admin(req, res);
+        try {
+            const report_id = req.query.report_id;
+            if(!report_id) throw new Error('report not found');
+            await Report.findByIdAndDelete(report_id);
+            send_response(null, "Successfully deleted report", res);
+        } catch (e) {
+            send_error_response(null, e as Error, "/api/admin/reports", "destroy", res);
         }
     }
 };

@@ -6,6 +6,7 @@ interface IReport {
     recipe : IRecipe['_id'];
     comment : IComment['_id'];
     body : string;
+    is_comment_report : boolean;
     createdAt? : Date;
     updatedAt? : Date;
 }
