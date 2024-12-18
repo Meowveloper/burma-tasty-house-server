@@ -26,6 +26,26 @@ const AdminReportController = {
             send_error_response(null, e as Error, "/api/admin/reports", "report_with_pagination", res);
         }
     },
+
+    show : async function (req : Request, res : Response) {
+        try {
+            const report_id = req.query.report_id;
+            if(!report_id) throw new Error('report not found');
+            const report = await Report.findById(report_id).populate("comment").populate({
+                path : "recipe", 
+                populate : [
+                    { path : "user" , model : "User" },
+                    { path : "tags" , model : "Tag" }, 
+                    { path : "steps", model : "Step" }
+                ]
+            });
+            if(!report) throw new Error('report not found');
+
+            send_response(report, "Successfully fetched report", res);
+        } catch (e) {
+            send_error_response(null, e as Error, "/api/admin/reports", "show", res);
+        }
+    }
 };
 
 export default AdminReportController;
