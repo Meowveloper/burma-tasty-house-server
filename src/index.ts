@@ -12,8 +12,12 @@ import recipesRoutes from "./routes/recipes";
 import stepRoutes from "./routes/steps";
 import tagRoutes from "./routes/tags";
 import commentRoutes from "./routes/comments";
-import SocketServer from "./classses/SocketServer";
+import SocketServer from "./classes/SocketServer";
 import reportRoutes from "./routes/reports";
+import adminGeneralRoutes from "./routes/admin/general";
+import adminReportRoutes from "./routes/admin/reports";
+import adminCommentRoutes from "./routes/admin/comments";
+import adminRecipeRoutes from "./routes/admin/recipes";
 require("dotenv/config");
 
 const app = express();
@@ -40,13 +44,19 @@ app.use(
 ); // to prevent cors error
 app.use(cookieParser()); // to manage cookies
 
-// routes ---
+// user routes ---
 app.use("/api/users", userRoutes);
 app.use("/api/recipes", recipesRoutes);
 app.use("/api/steps", stepRoutes);
 app.use("/api/tags", tagRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/reports", reportRoutes);
+
+// admin routes
+app.use('/api/admin/', adminGeneralRoutes);
+app.use('/api/admin/reports', adminReportRoutes);
+app.use('/api/admin/comments', adminCommentRoutes);
+app.use('/api/admin/recipes', adminRecipeRoutes);
 
 app.get("/", (req: Request, res: Response) => {
     res.json("hello world from burma-tasty-house");
